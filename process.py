@@ -55,4 +55,4 @@ with open('test.txt', mode='w') as f:
         f.write(item + "\n")
 print('Number of images used for training',str(len(trainfiles)))
 print('Number of images used for validation',str(len(validfiles)))
-print('Number of images used for testing',str(len(testfiles))
+print('Number of images used for testing',str(len(testfiles)))
