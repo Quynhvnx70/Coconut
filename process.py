@@ -1,28 +1,58 @@
 import glob, os
+import argparse
+import random
+from collections import Counter
+parser = argparse.ArgumentParser()
+parser.add_argument('train_pct',help="percentage of images to be used for training, the rest are used for validation and testing",
+                    type=int)
+parser.add_argument('valid_pct',help="percentage of images to be used for validation, the rest are used for training and testing",
+                    type=int)
+parser.add_argument('yolodataset',help="path to directory with images and yolo annotations",
+                    type=str)
+args = parser.parse_args()
 
-# Current directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
 
-print(current_dir)
+counter = 1  
 
-current_dir = 'data/obj'
+extensions = []
+images=[]
+#check extension of files in folder:
+for filename in os.scandir(args.yolodataset):
+    title,ext = os.path.splitext(filename.name)
+    if ext != ".txt":
+       extensions.append(ext)
+       
+ext_dict=Counter(extensions)
+extension = max(ext_dict,key=ext_dict.get)       
+print("Your image file extension is: " + extension)
 
-# Percentage of images to be used for the test set
-percentage_test = 10;
+for filename in os.listdir(args.yolodataset):  
+    _, ext = os.path.splitext(os.path.basename(filename))
+    if ext == extension:
+       images.append(os.path.join(args.yolodataset,filename))
 
-# Create and/or truncate train.txt and test.txt
-file_train = open('data/train.txt', 'w')
-file_test = open('data/test.txt', 'w')
+number_of_images = len(images)
+   
+index_valid = round(number_of_images*args.valid_pct/100)
+validfiles = random.sample(images,index_valid)
+traintestfiles = list(set(images).difference(set(validfiles)))
+index_train = round(len(traintestfiles)*(args.train_pct/(100-args.valid_pct)))
+trainfiles = random.sample(traintestfiles,index_train)
+testfiles = list(set(traintestfiles).difference(set(trainfiles)))
 
-# Populate train.txt and test.txt
-counter = 1
-index_test = round(100 / percentage_test)
-for pathAndFilename in glob.iglob(os.path.join(current_dir, "*.jpg")):
-    title, ext = os.path.splitext(os.path.basename(pathAndFilename))
+print('Number of images:',number_of_images)
 
-    if counter == index_test:
-        counter = 1
-        file_test.write("data/obj" + "/" + title + '.jpg' + "\n")
-    else:
-        file_train.write("data/obj" + "/" + title + '.jpg' + "\n")
-        counter = counter + 1
+
+with open('train.txt', mode='w') as f:
+    for item in trainfiles:
+        f.write(item + "\n")
+
+with open('valid.txt', mode='w') as f:
+    for item in validfiles:
+        f.write(item + "\n")
+with open('test.txt', mode='w') as f:
+    for item in testfiles:
+        f.write(item + "\n")
+print('Number of images used for training',str(len(trainfiles)))
+print('Number of images used for validation',str(len(validfiles)))
+print('Number of images used for testing',str(len(testfiles))
